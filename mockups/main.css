@@ -1,0 +1,5 @@
+/* Page specific actions on entries */
+#entries-menu li{
+  list-style: none;
+  display: inline-block;
+}
