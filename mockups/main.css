@@ -45,6 +45,21 @@ a:visited{
 
 #entries {
   display: block;
+  width: 50%;
+  margin: 0 auto;
+}
+
+/* *breaks for narrow browser window */
+#entries li span:nth-child(2n) {
+  position: absolute;
+  right: 25%;
+}
+
+
+
+#entries li {
+  list-style: none;
+  font-size: 1.5em;
 }
 
 
@@ -67,6 +82,8 @@ a:visited{
   margin: 0 25%;
   min-width: 360px;
 }
+
+
 
 
 /* Layout breaks at narrow window sizes */
