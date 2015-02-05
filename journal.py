@@ -72,6 +72,24 @@ def open_connection(event):
     request = event.request
     settings = request.registry.settings
     request.db = connect_db(settings)
+    request.add_finished_callback(close_connection)
+
+
+def close_connection(request):
+    """
+    Close the database connection for a request.
+
+    If there has ben an error in processings the request, abort any
+    open transactions.
+    """
+    db = getattr(requeset, 'db', None)
+    if db is not None:
+        if request.exceptions is not None:
+            db.rollback()
+        else:
+            db.commit()
+        request.db.close()
+
 
 
 if __name__ == "__main__":
