@@ -7,6 +7,7 @@ from contextlib import closing
 from pyramid.config import Configurator
 from pyramid.session import SignedCookieSessionFactory
 from pyramid.view import view_config
+from pyramid.events import NewRequest, subscriber
 from waitress import serve
 
 
@@ -64,6 +65,13 @@ def init_db():
     with closing(connect_db(settings)) as db:
         db.cursor().execute(DB_SCHEMA)
         db.commit()
+
+
+@subscriber(NewRequest)
+def open_connection(event):
+    request = event.request
+    settings = request.registry.settings
+    request.db = connect_db(settings)
 
 
 if __name__ == "__main__":
