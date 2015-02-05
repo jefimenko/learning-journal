@@ -43,6 +43,8 @@ def db(request):
     """
     Set up and tear down a database.
     """
+    settings = {'db': TEST_DSN}
+    init_db(settings)
 
     def cleanup():
         clear_db(settings)
