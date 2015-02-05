@@ -91,7 +91,6 @@ def close_connection(request):
         request.db.close()
 
 
-
 if __name__ == "__main__":
     app = main()
     port = os.environ.get('PORT', 5000)
