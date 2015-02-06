@@ -8,6 +8,7 @@ from pyramid.session import SignedCookieSessionFactory
 from pyramid.view import view_config
 from pyramid.events import NewRequest, subscriber
 from waitress import serve
+import datetime
 
 
 DB_SCHEMA = """
@@ -22,7 +23,7 @@ CREATE TABLE IF NOT EXISTS entries (
 INSERT_ENTRY = """
 INSERT INTO entries (
     title, text, created)
-    VALUES(%s, %s, current_timestamp
+    VALUES(%s, %s, %s
 )
 """
 
@@ -99,7 +100,9 @@ def close_connection(request):
 
 def write_entry(request):
     # Get title and text from requeset
-    values = [request.params.get('title'), request.params.get('text')]
+    values = [request.params.get('title'),
+              request.params.get('text'),
+              datetime.datetime.utcnow()]
 
     # execute SQL with appropriate place holders
     request.db.cursor().execute(INSERT_ENTRY, values)
