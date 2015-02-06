@@ -7,7 +7,7 @@ from journal import connect_db
 from journal import DB_SCHEMA
 
 
-TEST_DSN = 'dbname=test_learning_journal user=posgres password=admin'
+TEST_DSN = 'dbname=test-learning-journal user=postgres password=admin'
 
 
 def init_db(settings):
@@ -30,7 +30,7 @@ def clear_entries(settings):
 
 def run_query(db, query, params=(), get_results=True):
     cursor = db.cursor()
-    cusor.execute(query, params)
+    cursor.execute(query, params)
     db.commit()
     results = None
     if get_results:
@@ -73,15 +73,15 @@ def test_write_entry(req_context):
     from journal import write_entry
     fields = ('title', 'text')
     expected = ('Test Title', 'Test Text')
-    req_context. params = dict(zip(fields, expected))
+    req_context.params = dict(zip(fields, expected))
 
     rows = run_query(req_context.db, "SELECT * FROM entries")
-    assert len(row) == 0
+    assert len(rows) == 0
 
     result = write_entry(req_context)
     req_context.db.commit()
 
-    row = run_query(req_context.db, "SELECT title, text FROM entries")
+    rows = run_query(req_context.db, "SELECT title, text FROM entries")
     assert len(rows) == 1
     actual = rows[0]
     for idx, val in enumerate(expected):
