@@ -5,6 +5,7 @@ import pytest
 
 from journal import connect_db
 from journal import DB_SCHEMA
+import datetime
 
 
 TEST_DSN = 'dbname=test-learning-journal user=postgres password=admin'
@@ -86,3 +87,19 @@ def test_write_entry(req_context):
     actual = rows[0]
     for idx, val in enumerate(expected):
         assert val == actual[idx]
+
+
+def test_read_entries(req_context):
+    now = datetime.datetime(req_context)
+    expected = ('Test Title', 'Test Text', now)
+    run_query(req_context.db, INSERT_ENTRY, expected, False)
+
+    from journal import read_entries
+    result = read_entries(req_context)
+    assert 'entries' in result
+    assert len(result['entries']) == 1
+    for entry in result['entries']:
+        assert expected[0] == entry['title']
+        assert expected[1] == entry['text']
+        for key in 'id', 'created':
+            assert key in entry
