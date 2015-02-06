@@ -10,6 +10,13 @@ import datetime
 
 TEST_DSN = 'dbname=test-learning-journal user=postgres password=admin'
 
+INSERT_ENTRY = """
+INSERT INTO entries (
+    title, text, created)
+    VALUES(%s, %s, %s
+)
+"""
+
 
 def init_db(settings):
     with closing(connect_db(settings)) as db:
@@ -89,8 +96,15 @@ def test_write_entry(req_context):
         assert val == actual[idx]
 
 
+def test_read_entries_empty(req_context):
+    from journal import read_entries
+    result = read_entries(req_context)
+    assert 'entries' in result
+    assert len(result['entries']) == 0
+
+
 def test_read_entries(req_context):
-    now = datetime.datetime(req_context)
+    now = datetime.datetime.utcnow()
     expected = ('Test Title', 'Test Text', now)
     run_query(req_context.db, INSERT_ENTRY, expected, False)
 
