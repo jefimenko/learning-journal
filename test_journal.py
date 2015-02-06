@@ -164,3 +164,15 @@ def test_listing(webtest_context, content_gen):
     # assert expected in actual
     for thing in expected[:2]:
         assert thing in actual
+
+
+def test_post_to_add_view(webtest_context):
+    entry_data = {
+        'title': 'Hello there',
+        'text': 'This is a post',
+    }
+    response = webtest_context.post('add', params=entry_data, status='3*')
+    redirected = response.follow()
+    actual = redirected.body
+    for expected in entry_data.values():
+        assert expected in actual
