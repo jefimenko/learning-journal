@@ -7,6 +7,8 @@ from pyramid.config import Configurator
 from pyramid.session import SignedCookieSessionFactory
 from pyramid.view import view_config
 from pyramid.events import NewRequest, subscriber
+from pyramid.httpexceptions import HTTPFound, HTTPInternalServerError
+from pyramid.authentication import AuthTktAuthenticationPolicy
 from waitress import serve
 import datetime
 
@@ -44,17 +46,26 @@ def main():
     settings['db'] = os.environ.get(
         'DATABASE_URL', 'dbname=learning-journal user=postgres password=admin'
     )
+    settings['auth.username'] = os.environ.get('AUTH_USERNAME', 'admin')
+    settings['auth.password'] = os.environ.get('AUTH_PASSWORD', 'getout')
 
     secret = os.environ.get('JOURNAL_SESSION_SECRET', 'itsasekrit')
     session_factory = SignedCookieSessionFactory(secret)
 
+    # Encryption for authentication.
+    auth_secret = os.environ.get('JOURNAL_AUTH_SECRET', 'anotherseeeekrit')
+
     config = Configurator(
         settings=settings,
-        session_factory=session_factory
-
+        session_factory=session_factory,
+        authentication_policy=AuthTktAuthenticationPolicy(
+            secret=auth_secret,
+            hashalg='sha512'
+        ),
     )
     config.include('pyramid_jinja2')
     config.add_route('home', '/')
+    config.add_route('add', '/add')
     config.scan()
     app = config.make_wsgi_app()
     return app
@@ -120,6 +131,28 @@ def read_entries(request):
     columns = ('id', 'title', 'text', 'created')
     readout = [dict(zip(columns, onerow)) for onerow in cursor.fetchall()]
     return {'entries': readout}
+
+
+@view_config(route_name='add', request_method='POST')
+def add_entry(request):
+    try:
+        write_entry(request)
+    except psycopg2.Error:
+        return HTTPInternalServerError
+    return HTTPFound(request.route_url('home'))
+
+
+def do_login(request):
+    username = request.params.get('username', None)
+    password = request.params.get('password', None)
+    if not (username and password):
+        raise ValueError('Both username and password are required.')
+
+    settings = request.registry.settings
+    if username == settings.get('auth.username', ''):
+        if password == settings.get('auth.password', ''):
+            return True
+    return False
 
 
 if __name__ == "__main__":
