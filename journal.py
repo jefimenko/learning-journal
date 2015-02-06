@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 import os
 import logging
 import psycopg2
@@ -17,6 +16,13 @@ CREATE TABLE IF NOT EXISTS entries (
     title VARCHAR (127) NOT NULL,
     text TEXT NOT NULL,
     created TIMESTAMP NOT NULL
+)
+"""
+
+INSERT_ENTRY = """
+INSERT INTO entries (
+    title, text, created)
+    VALUES(%s, %s, current_timestamp
 )
 """
 
@@ -89,6 +95,14 @@ def close_connection(request):
         else:
             db.commit()
         request.db.close()
+
+
+def write_entry(request):
+    # Get title and text from requeset
+    values = [request.params.get('title'), request.params.get('text')]
+
+    # execute SQL with appropriate place holders
+    request.db.cursor().execute(INSERT_ENTRY, values)
 
 
 if __name__ == "__main__":
