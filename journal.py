@@ -36,11 +36,6 @@ logging.basicConfig()
 log = logging.getLogger(__file__)
 
 
-@view_config(route_name='home', renderer='string')
-def home(request):
-    return "Hello World"
-
-
 def main():
     """Create a configured wsgi app"""
     settings = {}
@@ -99,9 +94,9 @@ def close_connection(request):
     If there has ben an error in processings the request, abort any
     open transactions.
     """
-    db = getattr(requeset, 'db', None)
+    db = getattr(request, 'db', None)
     if db is not None:
-        if request.exceptions is not None:
+        if request.exception is not None:
             db.rollback()
         else:
             db.commit()
@@ -118,6 +113,7 @@ def write_entry(request):
     request.db.cursor().execute(INSERT_ENTRY, values)
 
 
+@view_config(route_name='home', renderer='templates/list.jinja2')
 def read_entries(request):
     cursor = request.db.cursor()
     cursor.execute(READ_ENTRY)
