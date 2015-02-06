@@ -27,6 +27,11 @@ INSERT INTO entries (
 )
 """
 
+READ_ENTRY = """
+SELECT * FROM entries
+"""
+
+
 logging.basicConfig()
 log = logging.getLogger(__file__)
 
@@ -106,6 +111,14 @@ def write_entry(request):
 
     # execute SQL with appropriate place holders
     request.db.cursor().execute(INSERT_ENTRY, values)
+
+
+def read_entries(request):
+    cursor = request.db.cursor()
+    cursor.execute(READ_ENTRY)
+    columns = ('id', 'title', 'text', 'created')
+    readout = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    return {'entries': readout}
 
 
 if __name__ == "__main__":

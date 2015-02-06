@@ -99,6 +99,7 @@ def test_write_entry(req_context):
 def test_read_entries_empty(req_context):
     from journal import read_entries
     result = read_entries(req_context)
+    print result
     assert 'entries' in result
     assert len(result['entries']) == 0
 
