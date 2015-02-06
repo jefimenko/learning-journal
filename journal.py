@@ -46,6 +46,9 @@ def main():
     settings = {}
     settings['reload_all'] = os.environ.get('DEBUG', True)
     settings['debug_all'] = os.environ.get('DEBUG', True)
+    settings['db'] = os.environ.get(
+        'DATABASE_URL', 'dbname=learning-journal user=postgres password=admin'
+    )
 
     secret = os.environ.get('JOURNAL_SESSION_SECRET', 'itsasekrit')
     session_factory = SignedCookieSessionFactory(secret)
@@ -53,6 +56,7 @@ def main():
     config = Configurator(
         settings=settings,
         session_factory=session_factory
+
     )
     config.include('pyramid_jinja2')
     config.add_route('home', '/')
@@ -62,7 +66,7 @@ def main():
 
 
 def connect_db(settings):
-    """Return a connection to the configured databas"""
+    """Return a connection to the configured database"""
     return psycopg2.connect(settings['db'])
 
 
@@ -118,7 +122,7 @@ def read_entries(request):
     cursor = request.db.cursor()
     cursor.execute(READ_ENTRY)
     columns = ('id', 'title', 'text', 'created')
-    readout = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    readout = [dict(zip(columns, onerow)) for onerow in cursor.fetchall()]
     return {'entries': readout}
 
 
