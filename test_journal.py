@@ -88,7 +88,8 @@ def webtest_context(db):
 
 
 @pytest.fixture(scope='function')
-def content_gen(db):
+def content_gen(db, request):
+    """Create a single entry to test."""
     settings = db
     input = ('some title', 'some text', datetime.datetime.utcnow())
     with closing(connect_db(settings)) as db:
@@ -158,5 +159,8 @@ def test_listing(webtest_context, content_gen):
     expected = content_gen
 
     response = webtest_context.get('/')
+    assert response.status_code == 200
     actual = response.body
-    assert expected == actual
+    # assert expected in actual
+    for thing in expected[:2]:
+        assert thing in actual
