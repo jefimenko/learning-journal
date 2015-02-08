@@ -10,6 +10,7 @@ from pyramid.events import NewRequest, subscriber
 from pyramid.httpexceptions import HTTPFound, HTTPInternalServerError
 from pyramid.authentication import AuthTktAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
+from cryptacular.bcrypt import BCRYPTPasswordManager
 from waitress import serve
 import datetime
 
@@ -50,7 +51,10 @@ def main():
         'DATABASE_URL', 'dbname=learning-journal user=postgres password=admin'
     )
     settings['auth.username'] = os.environ.get('AUTH_USERNAME', 'admin')
-    settings['auth.password'] = os.environ.get('AUTH_PASSWORD', 'getout')
+    manager = BCRYPTPasswordManager()
+    settings['auth.password'] = os.environ.get(
+        'AUTH_PASSWORD', manager.encode('getout')
+    )
 
     secret = os.environ.get('JOURNAL_SESSION_SECRET', 'itsasekrit')
     session_factory = SignedCookieSessionFactory(secret)
@@ -154,10 +158,10 @@ def do_login(request):
         raise ValueError('Both username and password are required.')
 
     settings = request.registry.settings
+    manager = BCRYPTPasswordManager()
     if username == settings.get('auth.username', ''):
-        if password == settings.get('auth.password', ''):
-            return True
-    return False
+        hashed = settings.get('auth.password', '')
+        return manager.check(hashed, password)
 
 
 if __name__ == "__main__":
