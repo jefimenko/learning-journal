@@ -9,8 +9,11 @@ from pyramid.view import view_config
 from pyramid.events import NewRequest, subscriber
 from pyramid.httpexceptions import HTTPFound, HTTPInternalServerError
 from pyramid.authentication import AuthTktAuthenticationPolicy
+from pyramid.authorization import ACLAuthorizationPolicy
 from waitress import serve
 import datetime
+
+here = os.path.dirname(os.path.abspath(__file__))
 
 
 DB_SCHEMA = """
@@ -62,10 +65,12 @@ def main():
             secret=auth_secret,
             hashalg='sha512'
         ),
+        authorization_policy=ACLAuthorizationPolicy(),
     )
     config.include('pyramid_jinja2')
     config.add_route('home', '/')
     config.add_route('add', '/add')
+    config.add_static_view('static', os.path.join(here, 'static'))
     config.scan()
     app = config.make_wsgi_app()
     return app
