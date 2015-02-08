@@ -2,9 +2,9 @@
 from contextlib import closing
 from pyramid import testing
 import pytest
-
 from journal import connect_db
 from journal import DB_SCHEMA
+from cryptacular. bcrypt import BCRYPTPasswordManager
 import datetime
 import os
 
@@ -181,9 +181,11 @@ def test_post_to_add_view(webtest_context):
 # Login
 @pytest.fixture(scope='function')
 def auth_req(request):
+    manager = BCRYPTPasswordManager()
     settings = {
         'auth.username': 'admin',
-        'auth.password': 'secret',
+        # Password encryption
+        'auth.password': manager.encode('secret'),
     }
     testing.setUp(settings=settings)
     req = testing.DummyRequest()
