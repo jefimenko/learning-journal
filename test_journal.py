@@ -18,6 +18,8 @@ INSERT INTO entries (
 )
 """
 
+INPUT_BTN = '<input type="submit" value="Share" name="Share"/>'
+
 
 def init_db(settings):
     with closing(connect_db(settings)) as db:
@@ -79,7 +81,7 @@ def req_context(db, request):
 
 
 @pytest.fixture(scope='function')
-def webtest_context(db):
+def app(db):
     from journal import main
     from webtest import TestApp
     os.environ['DATABASE_URL'] = TEST_DSN
@@ -147,18 +149,18 @@ def test_read_entries(req_context):
             assert key in entry
 
 
-def test_empty_listing(webtest_context):
-    response = webtest_context.get('/')
+def test_empty_listing(app):
+    response = app.get('/')
     assert response.status_code == 200
     actual = response.body
     expected = 'No entries here so far'
     assert expected in actual
 
 
-def test_listing(webtest_context, content_gen):
+def test_listing(app, content_gen):
     expected = content_gen
 
-    response = webtest_context.get('/')
+    response = app.get('/')
     assert response.status_code == 200
     actual = response.body
     # assert expected in actual
@@ -166,12 +168,12 @@ def test_listing(webtest_context, content_gen):
         assert thing in actual
 
 
-def test_post_to_add_view(webtest_context):
+def test_post_to_add_view(app):
     entry_data = {
         'title': 'Hello there',
         'text': 'This is a post',
     }
-    response = webtest_context.post('/add', params=entry_data, status='3*')
+    response = app.post('/add', params=entry_data, status='3*')
     redirected = response.follow()
     actual = redirected.body
     for expected in entry_data.values():
@@ -222,3 +224,39 @@ def test_do_login_missing_params(auth_req):
         auth_req.params = params
         with pytest.raises(ValueError):
             do_login(auth_req)
+
+
+# Login frontend
+def login_helper(username, password, app):
+    """
+    Factor out app login for reuse in tests
+
+    Accept all status codes so that assertions for tests can be made.
+    """
+    login_data = {'username': username, 'password': password}
+    return app.post('/login', params=login_data, status='*')
+
+
+def test_start_as_anonymous(app):
+    response = app.get('/', status=200)
+    actual = response.body
+    assert INPUT_BTN not in actual
+
+
+def test_do_login_success(app):
+    username, password = ('admin', 'secret')
+    redirect = login_helper(username, password, app)
+    assert redirect.status_code == 302
+    response = redirect.follow()
+    assert response.status_code == 200
+    actual = response.body
+    assert INPUT_BTN in actual
+
+
+def test_login_fails(app):
+    username, password = ('admind', 'wrong')
+    response = login_helper(username, password, app)
+    assert response.status_code == 200
+    actual = response.body
+    assert "Login Failed" in actual
+    assert INPUT_BTN not in actual
