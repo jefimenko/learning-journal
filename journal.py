@@ -10,6 +10,7 @@ from pyramid.events import NewRequest, subscriber
 from pyramid.httpexceptions import HTTPFound, HTTPInternalServerError
 from pyramid.authentication import AuthTktAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
+from pyramid.security import remember, forget
 from cryptacular.bcrypt import BCRYPTPasswordManager
 from waitress import serve
 import datetime
@@ -34,7 +35,7 @@ INSERT INTO entries (
 """
 
 READ_ENTRY = """
-SELECT * FROM entries
+SELECT id, title, text, created FROM entries
 """
 
 
@@ -74,6 +75,9 @@ def main():
     config.include('pyramid_jinja2')
     config.add_route('home', '/')
     config.add_route('add', '/add')
+    config.add_route('new', '/new')
+    config.add_route('login', '/login')
+    config.add_route('logout', '/logout')
     config.add_static_view('static', os.path.join(here, 'static'))
     config.scan()
     app = config.make_wsgi_app()
@@ -141,6 +145,10 @@ def read_entries(request):
     readout = [dict(zip(columns, onerow)) for onerow in cursor.fetchall()]
     return {'entries': readout}
 
+@view_config(route_name='new', renderer='templates/new.jinja2')
+def new_entry(request):
+    return HTTPFound(request.route_url('new'), headers=headers)
+
 
 @view_config(route_name='add', request_method='POST')
 def add_entry(request):
@@ -156,7 +164,6 @@ def do_login(request):
     password = request.params.get('password', None)
     if not (username and password):
         raise ValueError('Both username and password are required.')
-
     settings = request.registry.settings
     manager = BCRYPTPasswordManager()
     if username == settings.get('auth.username', ''):
@@ -164,10 +171,36 @@ def do_login(request):
         return manager.check(hashed, password)
 
 
+@view_config(route_name='login', renderer="templates/login.jinja2")
+def login(request):
+    username = request.params.get('username', '')
+    error = ''
+    if request.method == 'POST':
+        error = "Login Failed"
+        authenticated = False
+        try:
+            authenticated = do_login(request)
+        except ValueError as e:
+            error = str(e)
+
+        if authenticated:
+            headers = remember(request, username)
+            return HTTPFound(request.route_url('home'), headers=headers)
+
+    return {'error': error, 'username': username}
+
+
+@view_config(route_name='logout')
+def logout(request):
+    headers = forget(request)
+    return HTTPFound(request.route_url('home'), headers=headers)
+
+
 if __name__ == "__main__":
     app = main()
     port = os.environ.get('PORT', 5000)
     serve(app, host='0.0.0.0', port=port)
+    settings = {}
     settings['reload_all'] = os.environ.get('DEBUG', True)
     settings['debug_all'] = os.environ.get('DEBUG', True)
     settings['db'] = os.environ.get(

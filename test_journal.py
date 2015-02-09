@@ -163,7 +163,6 @@ def test_listing(app, content_gen):
     response = app.get('/')
     assert response.status_code == 200
     actual = response.body
-    # assert expected in actual
     for thing in expected[:2]:
         assert thing in actual
 
@@ -191,6 +190,10 @@ def auth_req(request):
     }
     testing.setUp(settings=settings)
     req = testing.DummyRequest()
+
+    print
+    print "check fixture:"
+    print settings['auth.password']
 
     def cleanup():
         testing.tearDown()
@@ -243,8 +246,10 @@ def test_start_as_anonymous(app):
     assert INPUT_BTN not in actual
 
 
-def test_do_login_success(app):
-    username, password = ('admin', 'secret')
+def test_login_success(app):
+    # This test does not create an isolated case for checking the username and password
+    # and actually checks against what's set in journal.py currently...
+    username, password = ('admin', 'getout')
     redirect = login_helper(username, password, app)
     assert redirect.status_code == 302
     response = redirect.follow()
@@ -254,9 +259,19 @@ def test_do_login_success(app):
 
 
 def test_login_fails(app):
-    username, password = ('admind', 'wrong')
+    username, password = ('admin', 'wrong')
     response = login_helper(username, password, app)
     assert response.status_code == 200
     actual = response.body
     assert "Login Failed" in actual
+    assert INPUT_BTN not in actual
+
+
+# Logout
+def test_logout(app):
+    test_login_success(app)
+    redirect = app.get('/logout', status="3*")
+    response = redirect.follow()
+    assert response.status_code ==200
+    actual = response.body
     assert INPUT_BTN not in actual
