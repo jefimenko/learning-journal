@@ -1,7 +1,8 @@
-/* general structure */
+/* General structure */
 * {
   font-family: 'Lato', sans-serif;
 }
+
 
 h1 {
   font-size: 3em;
@@ -40,6 +41,27 @@ a:visited{
 
   margin: 10px -3px 10px 6%;
 }
+
+
+/* Login page input fields*/
+
+#loging_link {
+  width: 360px;
+}
+
+#login_link li {
+  text-align: right;
+  list-style: none;
+}
+
+.field label {
+  width: 100px;
+}
+
+.field input {
+  width: 200px;
+}
+
 
 /* Home page */
 
