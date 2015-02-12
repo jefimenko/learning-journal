@@ -3,7 +3,7 @@
 
 {% if request.authenticated_userid %}
 
-{% for entry in entries%}
+
   <aside>
   <form action="{{ request.route_url('update', id=entry.id) }}" method="POST" class="update_entry">
     <div class="field">
@@ -25,7 +25,6 @@
     <li id="edit-entry-button"><a href="/detail/{{ entry.id }}">back</a></li>
   </ul>
 
-{% endfor %}
 
 {% endif %}
 

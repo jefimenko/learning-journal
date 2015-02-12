@@ -2,7 +2,8 @@
 {% block body %}
 
 
-{% for entry in entries %}
+
+
 
   <article class="entry" id="entry={{ entry.id }}">
     <h3><a class="entry-title" href="/detail/{{ entry.id }}">{{ entry.title }}</a></h3>
@@ -19,6 +20,6 @@
   {% endif %}
 </ul>
 
-{% endfor %}
+
 
 {% endblock %}

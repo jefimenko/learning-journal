@@ -123,20 +123,29 @@ def read_one_entry_from_db(request):
 
     columns = ('id', 'title', 'text', 'created')
 
-    return [dict(zip(columns, cursor.fetchone()))]
+    return dict(zip(columns, cursor.fetchone()))
 
 
 @view_config(route_name='detail', renderer='templates/detail.jinja2')
 def view_details(request):
     entry = read_one_entry_from_db(request)
-    entry[0]['text'] = markdown.markdown(entry[0]['text'], extensions=['codehilite(linenums=True)', 'fenced_code'])
-    return {'entries': entry}
+
+    from pygments import highlight
+    from pygments.lexers import get_lexer_by_name
+    from pygments.formatters import HtmlFormatter
+
+    # lexer = get_lexer_by_name("python", stripall=True)
+    # formatter = HtmlFormatter(linenos=True, cssclass="codehilite")
+    # entry[0]['text'] = highlight(entry[0]['text'], lexer, formatter)
+
+    entry['text'] = markdown.markdown(entry['text'], extensions=['codehilite(linenums=True)', 'fenced_code'])
+    return {'entry': entry}
 
 
 @view_config(route_name='edit', renderer='templates/edit.jinja2')
 def edit_entry(request):
     entry = read_one_entry_from_db(request)
-    return {'entries': entry}
+    return {'entry': entry}
 
 
 UPDATE_ONE_ENTRY = """
