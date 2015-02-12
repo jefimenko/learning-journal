@@ -105,9 +105,50 @@ def read_entries(request):
     entries = [dict(zip(columns, onerow)) for onerow in cursor.fetchall()]
     return {'entries': entries }
 
+
 @view_config(route_name='new', renderer='templates/new.jinja2')
 def new_entry(request):
     return {}
+
+
+READ_ONE_ENTRY = """
+SELECT id, title, text, created FROM entries WHERE id=%s
+"""
+def read_one_entry_from_db(request):
+    entry_id = request.matchdict.get('id')
+    cursor = request.db.cursor()
+
+    cursor.execute(READ_ONE_ENTRY, entry_id)
+
+    columns = ('id', 'title', 'text', 'created')
+
+    return [dict(zip(columns, cursor.fetchone()))]
+
+
+@view_config(route_name='detail', renderer='templates/detail.jinja2')
+def view_details(request):
+    entry = read_one_entry_from_db(request)
+    return {'entries': entry}
+
+
+@view_config(route_name='edit', renderer='templates/edit.jinja2')
+def edit_entry(request):
+    entry = read_one_entry_from_db(request)
+    return {'entries': entry}
+
+
+UPDATE_ONE_ENTRY = """
+UPDATE entries SET (title, text) = (%s, %s) WHERE id=%s
+"""
+
+@view_config(route_name='update', request_method='POST')
+def update_entry_action(request):
+    entry_id = request.matchdict.get('id', -1)
+    cursor = request.db.cursor()
+    title = request.params.get('title')
+    text = request.params.get('text')
+    cursor.execute(UPDATE_ONE_ENTRY, [title, text, entry_id])
+    return HTTPFound(request.route_url('detail', id=entry_id))
 
 
 @view_config(route_name='add', request_method='POST')
@@ -162,8 +203,11 @@ def main():
     )
     config.include('pyramid_jinja2')
     config.add_route('home', '/')
-    config.add_route('add', '/add')
     config.add_route('new', '/new')
+    config.add_route('add', '/add')
+    config.add_route('detail', '/detail/{id}')
+    config.add_route('edit', '/edit/{id}')
+    config.add_route('update', '/update')
     config.add_route('login', '/login')
     config.add_route('logout', '/logout')
     config.add_static_view('static', os.path.join(here, 'static'))

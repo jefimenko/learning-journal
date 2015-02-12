@@ -3,22 +3,17 @@
 
   <h2>Entries</h2>
 
+
   {% for entry in entries %}
   <article class="entry" id="entry={{entry.id}}">
-    <h3>{{ entry.title }}</h3>
+    <h3><a href="/detail/{{ entry.id }}">{{ entry.title }}</a></h3>
     <p class="dateline">{{ entry.created.strftime('%b. %d, %Y') }}
-    <div class="entry_body">
-      {{ entry.text|safe }}
-    </div>
   </article>
   {% else %}
   <div class="entry">
     <p><em>No entries here so far</em></p>
   </div>
   {% endfor %}
-
-
-
 
 
   <ul id="entries-menu">
