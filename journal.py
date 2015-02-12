@@ -13,6 +13,7 @@ from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.security import remember, forget
 from cryptacular.bcrypt import BCRYPTPasswordManager
 from waitress import serve
+import markdown
 import datetime
 
 here = os.path.dirname(os.path.abspath(__file__))
@@ -128,6 +129,7 @@ def read_one_entry_from_db(request):
 @view_config(route_name='detail', renderer='templates/detail.jinja2')
 def view_details(request):
     entry = read_one_entry_from_db(request)
+    entry[0]['text'] = markdown.markdown(entry[0]['text'], extensions=['codehilite(linenums=True)', 'fenced_code'])
     return {'entries': entry}
 
 
