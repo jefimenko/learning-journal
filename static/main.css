@@ -53,6 +53,18 @@ a, a:visited {
   margin: 10px auto;
 }
 
+.dateline {
+  display: block;
+  margin-top: -10px;
+  margin-bottom: 20px;
+}
+
+.entry-title {
+  display: block;
+  margin-top: 30px;
+  margin-bottom:0;
+}
+
 /* Login/logout */
 
 #login-label {
@@ -90,6 +102,15 @@ label {
   width: 794px;
   padding: 2px;
   border: 1px solid #aaa;
+}
+
+#title {
+  font-size: 2em;
+}
+
+#text {
+  font-size: 1.25em;
+  font-weight: normal;
 }
 
 div.control_row {
