@@ -35,53 +35,13 @@ INSERT INTO entries (
 """
 
 READ_ENTRY = """
-SELECT id, title, text, created FROM entries
+SELECT id, title, text, created FROM entries ORDER BY created DESC
 """
 
 
 logging.basicConfig()
 log = logging.getLogger(__file__)
 
-
-def main():
-    """Create a configured wsgi app"""
-    settings = {}
-    settings['reload_all'] = os.environ.get('DEBUG', True)
-    settings['debug_all'] = os.environ.get('DEBUG', True)
-    settings['db'] = os.environ.get(
-        'DATABASE_URL', 'dbname=learning-journal user=postgres password=admin'
-    )
-    settings['auth.username'] = os.environ.get('AUTH_USERNAME', 'admin')
-    manager = BCRYPTPasswordManager()
-    settings['auth.password'] = os.environ.get(
-        'AUTH_PASSWORD', manager.encode('getout')
-    )
-
-    secret = os.environ.get('JOURNAL_SESSION_SECRET', 'itsasekrit')
-    session_factory = SignedCookieSessionFactory(secret)
-
-    # Encryption for authentication.
-    auth_secret = os.environ.get('JOURNAL_AUTH_SECRET', 'anotherseeeekrit')
-
-    config = Configurator(
-        settings=settings,
-        session_factory=session_factory,
-        authentication_policy=AuthTktAuthenticationPolicy(
-            secret=auth_secret,
-            hashalg='sha512'
-        ),
-        authorization_policy=ACLAuthorizationPolicy(),
-    )
-    config.include('pyramid_jinja2')
-    config.add_route('home', '/')
-    config.add_route('add', '/add')
-    config.add_route('new', '/new')
-    config.add_route('login', '/login')
-    config.add_route('logout', '/logout')
-    config.add_static_view('static', os.path.join(here, 'static'))
-    config.scan()
-    app = config.make_wsgi_app()
-    return app
 
 
 def connect_db(settings):
@@ -142,12 +102,12 @@ def read_entries(request):
     cursor = request.db.cursor()
     cursor.execute(READ_ENTRY)
     columns = ('id', 'title', 'text', 'created')
-    readout = [dict(zip(columns, onerow)) for onerow in cursor.fetchall()]
-    return {'entries': readout}
+    entries = [dict(zip(columns, onerow)) for onerow in cursor.fetchall()]
+    return {'entries': entries }
 
 @view_config(route_name='new', renderer='templates/new.jinja2')
 def new_entry(request):
-    return HTTPFound(request.route_url('new'), headers=headers)
+    return {}
 
 
 @view_config(route_name='add', request_method='POST')
@@ -169,6 +129,47 @@ def do_login(request):
     if username == settings.get('auth.username', ''):
         hashed = settings.get('auth.password', '')
         return manager.check(hashed, password)
+
+
+def main():
+    """Create a configured wsgi app"""
+    settings = {}
+    settings['reload_all'] = os.environ.get('DEBUG', True)
+    settings['debug_all'] = os.environ.get('DEBUG', True)
+    settings['db'] = os.environ.get(
+        'DATABASE_URL', 'dbname=learning-journal user=postgres password=admin'
+    )
+    settings['auth.username'] = os.environ.get('AUTH_USERNAME', 'admin')
+    manager = BCRYPTPasswordManager()
+    settings['auth.password'] = os.environ.get(
+        'AUTH_PASSWORD', manager.encode('getout')
+    )
+
+    secret = os.environ.get('JOURNAL_SESSION_SECRET', 'itsasekrit')
+    session_factory = SignedCookieSessionFactory(secret)
+
+    # Encryption for authentication.
+    auth_secret = os.environ.get('JOURNAL_AUTH_SECRET', 'anotherseeeekrit')
+
+    config = Configurator(
+        settings=settings,
+        session_factory=session_factory,
+        authentication_policy=AuthTktAuthenticationPolicy(
+            secret=auth_secret,
+            hashalg='sha512'
+        ),
+        authorization_policy=ACLAuthorizationPolicy(),
+    )
+    config.include('pyramid_jinja2')
+    config.add_route('home', '/')
+    config.add_route('add', '/add')
+    config.add_route('new', '/new')
+    config.add_route('login', '/login')
+    config.add_route('logout', '/logout')
+    config.add_static_view('static', os.path.join(here, 'static'))
+    config.scan()
+    app = config.make_wsgi_app()
+    return app
 
 
 @view_config(route_name='login', renderer="templates/login.jinja2")
