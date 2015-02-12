@@ -11,7 +11,7 @@
   <body id="home">
     <header>
       <aside id="user-controls">
-        <ul id="login_link">
+        <ul id="login-link">
         {% if not request.authenticated_userid %}
           <li><a href="{{ request.route_url('login') }}">log in</a></li>
         {% else %}
@@ -20,12 +20,13 @@
         </ul>
       </aside>
     </header>
-    <h1><a href="{{ request.route_url('home') }}">learning journal.</a></h1>
+    <h1><a id="learning-journal" href="{{ request.route_url('home') }}">learning journal.</a></h1>
 
 
 
     <ul id="entries">
-    {% block body %}{% endblock %}
+    {% block body %}
+    {% endblock %}
 
     </ul>
 

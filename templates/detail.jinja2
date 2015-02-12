@@ -5,19 +5,19 @@
 {% for entry in entries %}
 
   <article class="entry" id="entry={{ entry.id }}">
-    <h3><a href="/detail/{{ entry.id }}">{{ entry.title }}</a></h3>
+    <h3><a class="entry-title" href="/detail/{{ entry.id }}">{{ entry.title }}</a></h3>
     <p class="dateline">{{ entry.created.strftime('%b. %d, %Y') }}
     <div class="entry_body">
       {{ entry.text|safe }}
     </div>
   </article>
 
-  <ul id="entries-menu">
+<ul id="entries-menu">
 
-    {% if request.authenticated_userid %}
-    <li id="edit-entry-button"><a href="/edit/{{ entry.id }}">edit</a></li>
-    {% endif %}
-  </ul>
+  {% if request.authenticated_userid %}
+  <li id="edit-entry-button"><a href="/edit/{{ entry.id }}">edit</a></li>
+  {% endif %}
+</ul>
 
 {% endfor %}
 

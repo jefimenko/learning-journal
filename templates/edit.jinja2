@@ -7,15 +7,15 @@
   <aside>
   <form action="{{ request.route_url('update', id=entry.id) }}" method="POST" class="update_entry">
     <div class="field">
-      <label for="title">Title</label>
+      <label for="title">title</label>
       <input type="text" size="30" name="title" cols="80" id="title" value="{{ entry.title }}"/>
     </div>
     <div class="field">
-      <label for="text">Text</label>
+      <label for="text">text</label>
       <textarea name="text" id="text" rows="5" cols="80">{{ entry.text }}</textarea>
     </div>
     <div class="control_row">
-      <input type="submit" value="update" name="update"/>
+      <input type="submit" value="update" name="update" id="post-button"/>
     </div>
   </form>
   </aside>
