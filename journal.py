@@ -207,7 +207,7 @@ def main():
     config.add_route('add', '/add')
     config.add_route('detail', '/detail/{id}')
     config.add_route('edit', '/edit/{id}')
-    config.add_route('update', '/update')
+    config.add_route('update', '/update/{id}')
     config.add_route('login', '/login')
     config.add_route('logout', '/logout')
     config.add_static_view('static', os.path.join(here, 'static'))
