@@ -1,6 +1,6 @@
 /* General structure */
 
-#login-link, #entries-menu, #learning-journal, .entry-title, .dateline, 
+#login-link, #entries-menu, #learning-journal, .entry-title, .dateline, .entry_body,
 label, input , #login-label {
   font-family: 'Lato', sans-serif;
   list-style: none;
@@ -16,6 +16,10 @@ label, input , #login-label {
   font-family: 'Lato', sans-serif;
   font-size: 1.6em;
   font-weight: normal;
+}
+
+table.codehilitetable div{ 
+  font-family: monospace; 
 }
 
 .entry-title {
