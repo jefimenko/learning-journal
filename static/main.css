@@ -1,5 +1,5 @@
 /* General structure */
-* {
+title {
   font-family: 'Lato', sans-serif;
 }
 
@@ -45,7 +45,7 @@ a:visited{
 
 /* Login page input fields*/
 
-#loging_link {
+#login_link {
   width: 360px;
 }
 
