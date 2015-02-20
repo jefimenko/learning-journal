@@ -121,7 +121,7 @@ def read_one_entry_from_db(request):
     entry_id = request.matchdict.get('id')
     cursor = request.db.cursor()
 
-    cursor.execute(READ_ONE_ENTRY, entry_id)
+    cursor.execute(READ_ONE_ENTRY, [entry_id])
 
     columns = ('id', 'title', 'text', 'created')
 
