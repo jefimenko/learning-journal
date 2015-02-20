@@ -7,7 +7,8 @@ from pyramid.config import Configurator
 from pyramid.session import SignedCookieSessionFactory
 from pyramid.view import view_config
 from pyramid.events import NewRequest, subscriber
-from pyramid.httpexceptions import HTTPFound, HTTPInternalServerError
+from pyramid.httpexceptions \
+    import HTTPFound, HTTPInternalServerError, HTTPNotFound, HTTPForbidden
 from pyramid.authentication import AuthTktAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.security import remember, forget
@@ -42,7 +43,6 @@ SELECT id, title, text, created FROM entries ORDER BY created DESC
 
 logging.basicConfig()
 log = logging.getLogger(__file__)
-
 
 
 def connect_db(settings):
@@ -104,7 +104,7 @@ def read_entries(request):
     cursor.execute(READ_ENTRY)
     columns = ('id', 'title', 'text', 'created')
     entries = [dict(zip(columns, onerow)) for onerow in cursor.fetchall()]
-    return {'entries': entries }
+    return {'entries': entries}
 
 
 @view_config(route_name='new', renderer='templates/new.jinja2')
@@ -115,6 +115,8 @@ def new_entry(request):
 READ_ONE_ENTRY = """
 SELECT id, title, text, created FROM entries WHERE id=%s
 """
+
+
 def read_one_entry_from_db(request):
     entry_id = request.matchdict.get('id')
     cursor = request.db.cursor()
@@ -152,23 +154,30 @@ UPDATE_ONE_ENTRY = """
 UPDATE entries SET (title, text) = (%s, %s) WHERE id=%s
 """
 
+
 @view_config(route_name='update', request_method='POST')
 def update_entry_action(request):
-    entry_id = request.matchdict.get('id', -1)
-    cursor = request.db.cursor()
-    title = request.params.get('title')
-    text = request.params.get('text')
-    cursor.execute(UPDATE_ONE_ENTRY, [title, text, entry_id])
-    return HTTPFound(request.route_url('detail', id=entry_id))
+    if request.authenticated_userid:
+        entry_id = request.matchdict.get('id', -1)
+        cursor = request.db.cursor()
+        title = request.params.get('title')
+        text = request.params.get('text')
+        cursor.execute(UPDATE_ONE_ENTRY, [title, text, entry_id])
+        return HTTPFound(request.route_url('detail', id=entry_id))
+    else:
+        return HTTPForbidden()
 
 
 @view_config(route_name='add', request_method='POST')
 def add_entry(request):
-    try:
-        write_entry(request)
-    except psycopg2.Error:
-        return HTTPInternalServerError
-    return HTTPFound(request.route_url('home'))
+    if request.authenticated_userid:
+        try:
+            write_entry(request)
+        except psycopg2.Error:
+            return HTTPInternalServerError
+        return HTTPFound(request.route_url('home'))
+    else:
+        return HTTPForbidden()
 
 
 def do_login(request):
