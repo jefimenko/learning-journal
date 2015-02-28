@@ -38,13 +38,13 @@
     // var twit = $(".twitter-share-button").clone();
     function toggle_edit_button($tag) {
         if ($tag.text() == 'edit') {
-            $tag.text('back')
+            $tag.text('back');
         } else {
-            $tag.text('edit')
+            $tag.text('edit');
         }
     }
 
-    $("#edit").hide()
+    $("#edit").hide();
 
     $("#edit-entry-button a").click(function(click) {
         click.preventDefault();
@@ -52,7 +52,7 @@
         $("#edit").toggle();
         $("article").toggle();
 
-        toggle_edit_button($(this))
+        toggle_edit_button($(this));
 
     });
 
@@ -78,8 +78,8 @@
             $("article h3").val(json.title);
             $("article div.entry_body p").replaceWith(json.text_markdown);
 
-            $('#title').val(json.title)
-            $('#text').val(json.text)
+            $('#title').val(json.title);
+            $('#text').val(json.text);
         // $("iframe").remove();
         // twit.attr('data-text', json.title);
         // $("article").children().last().after(twit);
@@ -91,7 +91,7 @@
             $("#edit").toggle();
             $("article").toggle();
 
-            toggle_edit_button($("#edit-entry-button a"))
+            toggle_edit_button($("#edit-entry-button a"));
         });
 
 
