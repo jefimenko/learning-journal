@@ -66,13 +66,6 @@
         var title_input = $('#title').val();
         var text_input = $('#text').val();
 
-        var $new_entry = $("new").clone();
-        $new_entry.attr('id', 'entry='+json.id);
-        $new_entry.children().children().attr('href', '/detail/'+json.id);
-        $new_entry.children().children().text(json.title);
-        $new_entry.children().last().text(json.created);
-        $new_entry.insertAfter($("new"));
-
         $.ajax({
             type: "POST",
             url: "/add-dynamic",
@@ -80,7 +73,13 @@
             data: { title: title_input, text: text_input },
         }).done(function(json) {
             // Add a new element with the latest submission
-            $new_entry.children().children()
+            var $new_entry = $("#new").clone();
+
+            $new_entry.attr('id', 'entry='+json.id);
+            $new_entry.children().children().attr('href', '/detail/'+json.id);
+            $new_entry.children().children().text(json.title);
+            $new_entry.children().last().text(json.created);
+            $new_entry.insertAfter($("#new"));
             // Reset and hide new entry form
             $('#title').val("");
             $('#text').val("");
