@@ -1,20 +1,6 @@
 {% extends "base.jinja2" %}
 {% block body %}
 
-    <h2 class="section-label">entries:</h2>
-
-
-    {% for entry in entries %}
-    <article class="entry" id="entry={{entry.id}}">
-        <h3><a class="entry-title" href="/detail/{{ entry.id }}">{{ entry.title }}</a></h3>
-        <p class="dateline">{{ entry.created.strftime('%b. %d, %Y') }}
-    </article>
-    {% else %}
-    <div class="entry-title">
-        <p><em>No entries here so far</em></p>
-    </div>
-    {% endfor %}
-
 
     <ul id="entries-menu">
     <!--
@@ -24,5 +10,55 @@
         <li id="new-entry-button"><a href="{{ request.route_url('new') }}">+new</a></li>
         {% endif %}
     </ul>
+
+
+    <aside>
+    <form action="{{ request.route_url('add') }}" method="POST" class="add_entry">
+        <div class="field">
+            <label for="title">title</label>
+            <input type="text" size="30" name="title" id="title"/>
+        </div>
+        <div class="field">
+            <label for="text">text</label>
+            <textarea name="text" id="text" rows="5" cols="80"></textarea>
+        </div>
+        <div class="control_row">
+            <input type="submit" value="post" name="post" id="post-button"/>
+        </div>
+    </form>
+    </aside>
+
+
+    <h2 class="section-label">entries:</h2>
+
+    <article class="entry" id="new">
+        <h3><a class="entry-title"></a></h3>
+        <p class="dateline"></p>
+    </article>
+
+
+    {% for entry in entries %}
+    <article class="entry" id="entry={{entry.id}}">
+        <h3><a class="entry-title" href="/detail/{{ entry.id }}">{{ entry.title }}</a></h3>
+        <p class="dateline">{{ entry.created.strftime('%b. %d, %Y') }}</p>
+    </article>
+    {% else %}
+    <div class="entry-title">
+        <p><em>No entries here so far</em></p>
+    </div>
+    {% endfor %}
+
+
+
+
+
+<script>
+    $(".add_entry").hide();
+
+    $("#new-entry-button a").click(function(click) {
+        click.preventDefault();
+        $(".add_entry").toggle();
+    });
+</script>
 
 {% endblock %}
