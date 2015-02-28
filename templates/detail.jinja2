@@ -2,7 +2,7 @@
 {% block body %}
 
     <aside id="edit">
-    <form action="{{ request.route_url('update-dynamic', id=entry.id) }}" method="POST" class="update_entry">
+    <form action="{{ request.route_url('update', id=entry.id) }}" method="POST" class="update_entry">
         <div class="field">
             <label for="title">title</label>
             <input type="text" size="30" name="title" cols="80" id="title" value="{{ entry.title }}"/>
@@ -96,7 +96,7 @@
 
 
 
-    })
+    });
 </script>
 
 

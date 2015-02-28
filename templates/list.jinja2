@@ -3,15 +3,13 @@
 
 
     <ul id="entries-menu">
-    <!--
-        <li id="see-all-button">see all</li>
-    -->
         {% if request.authenticated_userid %}
         <li id="new-entry-button"><a href="{{ request.route_url('new') }}">+new</a></li>
         {% endif %}
     </ul>
 
 
+    {% if request.authenticated_userid %}
     <aside>
     <form action="{{ request.route_url('add') }}" method="POST" class="add_entry">
         <div class="field">
@@ -27,6 +25,7 @@
         </div>
     </form>
     </aside>
+    {% endif %}
 
 
     <h2 class="section-label">entries:</h2>
@@ -58,6 +57,36 @@
     $("#new-entry-button a").click(function(click) {
         click.preventDefault();
         $(".add_entry").toggle();
+    });
+
+
+    $("form").submit(function(submission) {
+        submission.preventDefault();
+
+        var title_input = $('#title').val();
+        var text_input = $('#text').val();
+
+        var $new_entry = $("new").clone();
+        $new_entry.attr('id', 'entry='+json.id);
+        $new_entry.children().children().attr('href', '/detail/'+json.id);
+        $new_entry.children().children().text(json.title);
+        $new_entry.children().last().text(json.created);
+        $new_entry.insertAfter($("new"));
+
+        $.ajax({
+            type: "POST",
+            url: "/add-dynamic",
+            dataType: "json",
+            data: { title: title_input, text: text_input },
+        }).done(function(json) {
+            // Add a new element with the latest submission
+            $new_entry.children().children()
+            // Reset and hide new entry form
+            $('#title').val("");
+            $('#text').val("");
+
+            $("form").hide();
+        });
     });
 </script>
 
