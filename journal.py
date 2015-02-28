@@ -140,7 +140,7 @@ def view_details(request):
     # formatter = HtmlFormatter(linenos=True, cssclass="codehilite")
     # entry[0]['text'] = highlight(entry[0]['text'], lexer, formatter)
 
-    entry['text'] = markdown.markdown(entry['text'], extensions=['codehilite(linenums=True)', 'fenced_code'])
+    entry['text_markdown'] = markdown.markdown(entry['text'], extensions=['codehilite(linenums=True)', 'fenced_code'])
     return {'entry': entry}
 
 
@@ -153,6 +153,24 @@ def edit_entry(request):
 UPDATE_ONE_ENTRY = """
 UPDATE entries SET (title, text) = (%s, %s) WHERE id=%s
 """
+
+
+@view_config(route_name='update-dynamic', renderer='json')
+def edit_entry_dynamic(request):
+    if request.authenticated_userid:
+        if request.method == 'POST':
+            try:
+                # Get rid of 'entry='
+                db_id = request.params.get('id', -1)[6:]
+                title = request.params.get('title', None)
+                text = request.params.get('text', None)
+                request.db.cursor().execute(UPDATE_ONE_ENTRY, (title, text, db_id))
+            except psycopg2.Error:
+                return HTTPInternalServerError
+            text_markdown = markdown.markdown(text, extensions=['codehilite(linenums=True)', 'fenced_code'])
+        return {'title': title, 'text': text, 'text_markdown': text_markdown}
+    else:
+        return HTTPForbidden()
 
 
 @view_config(route_name='update', request_method='POST')
@@ -228,6 +246,7 @@ def main():
     config.add_route('detail', '/detail/{id}')
     config.add_route('edit', '/edit/{id}')
     config.add_route('update', '/update/{id}')
+    config.add_route('update-dynamic', '/update-dynamic')
     config.add_route('login', '/login')
     config.add_route('logout', '/logout')
     config.add_static_view('static', os.path.join(here, 'static'))
