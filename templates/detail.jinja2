@@ -1,25 +1,96 @@
 {% extends "base.jinja2" %}
 {% block body %}
 
+    <aside id="edit">
+    <form action="{{ request.route_url('update-dynamic', id=entry.id) }}" method="POST" class="update_entry">
+        <div class="field">
+            <label for="title">title</label>
+            <input type="text" size="30" name="title" cols="80" id="title" value="{{ entry.title }}"/>
+        </div>
+        <div class="field">
+            <label for="text">text</label>
+            <textarea name="text" id="text" rows="5" cols="80">{{ entry.text }}</textarea>
+        </div>
+        <div class="control_row">
+            <input type="submit" value="update" name="update" id="post-button"/>
+        </div>
+    </form>
+    </aside>
 
 
-
-
-  <article class="entry" id="entry={{ entry.id }}">
-    <h3><a class="entry-title" href="/detail/{{ entry.id }}">{{ entry.title }}</a></h3>
-    <p class="dateline">{{ entry.created.strftime('%b. %d, %Y') }}
-    <div class="entry_body">
-      {{ entry.text|safe }}
-    </div>
-  </article>
+    <article class="entry" id="entry={{ entry.id }}">
+        <h3><a class="entry-title" href="/detail/{{ entry.id }}">{{ entry.title }}</a></h3>
+        <p class="dateline">{{ entry.created.strftime('%b. %d, %Y') }}
+        <div class="entry_body">
+            {{ entry.text_markdown|safe }}
+        </div>
+    </article>
 
 <ul id="entries-menu">
 
-  {% if request.authenticated_userid %}
-  <li id="edit-entry-button"><a href="/edit/{{ entry.id }}">edit</a></li>
-  {% endif %}
+    {% if request.authenticated_userid %}
+    <li id="edit-entry-button"><a href="/edit/{{ entry.id }}">edit</a></li>
+    {% endif %}
 </ul>
 
+
+<script>
+    // var twit = $(".twitter-share-button").clone();
+    $("#edit").hide()
+
+    $("#edit-entry-button a").click(function(click) {
+        click.preventDefault();
+
+        $("#edit").toggle();
+        $("article").toggle();
+
+        // $(this).text('back')
+
+        var $this = $(this)
+        if ($this.text() == 'edit') {
+            $this.text('back')
+        } else {
+            $this.text('edit')
+        }
+
+    });
+
+    // $(".twitter-share-button").attr('data-text', $('#title').val())
+    // $.getScript("http://platform.twitter.com/widgets.js");
+
+
+
+    $("form").submit(function(submission) {
+
+        var title_input = $('#title').val();
+        var text_input = $('#text').val();
+        var entry_id = $('article').attr('id');
+
+        submission.preventDefault();
+
+        $.ajax({
+            type: "POST",
+            url: "/update-dynamic",
+            dataType: "json",
+            data: { id: entry_id, title: title_input, text: text_input },
+        }).done(function(json) {
+            $("article h3").text(json.title);
+
+        // $("iframe").remove();
+        // twit.attr('data-text', json.title);
+        // $("article").children().last().after(twit);
+        // twit = $(".twitter-share-button").clone();
+        // twttr.widgets.load();
+
+            $("article div.entry_body p").replaceWith(json.text);
+
+            $("#edit").toggle();
+            $("article").toggle();
+
+        });
+
+    })
+</script>
 
 
 {% endblock %}
