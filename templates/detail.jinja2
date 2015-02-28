@@ -36,6 +36,14 @@
 
 <script>
     // var twit = $(".twitter-share-button").clone();
+    function toggle_edit_button($tag) {
+        if ($tag.text() == 'edit') {
+            $tag.text('back')
+        } else {
+            $tag.text('edit')
+        }
+    }
+
     $("#edit").hide()
 
     $("#edit-entry-button a").click(function(click) {
@@ -44,14 +52,7 @@
         $("#edit").toggle();
         $("article").toggle();
 
-        // $(this).text('back')
-
-        var $this = $(this)
-        if ($this.text() == 'edit') {
-            $this.text('back')
-        } else {
-            $this.text('edit')
-        }
+        toggle_edit_button($(this))
 
     });
 
@@ -90,7 +91,10 @@
             $("#edit").toggle();
             $("article").toggle();
 
+            toggle_edit_button($("#edit-entry-button a"))
         });
+
+
 
     })
 </script>
