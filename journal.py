@@ -155,7 +155,7 @@ UPDATE entries SET (title, text) = (%s, %s) WHERE id=%s
 """
 
 
-@view_config(route_name='update-dynamic', renderer='json')
+@view_config(route_name='update-dynamic', request_method='POST', renderer='json')
 def edit_entry_dynamic(request):
     if request.authenticated_userid:
         if request.method == 'POST':
@@ -184,6 +184,21 @@ def update_entry_action(request):
         return HTTPFound(request.route_url('detail', id=entry_id))
     else:
         return HTTPForbidden()
+
+
+@view_config(route_name='add-dynamic', request_method='POST', renderer='json')
+def add_entry_dynamic(request):
+    if request.authenticated_userid:
+        write_entry(request)
+        cursor = request.db.cursor()
+        cursor.execute(READ_ENTRY)
+        latest_post = cursor.fetchone()
+        return {'id': latest_post[0],
+                'title': latest_post[1],
+                'text': latest_post[2],
+                'created': latest_post[3].strftime('%b %d, %Y')}
+    else:
+        return HTTPForbidden
 
 
 @view_config(route_name='add', request_method='POST')
@@ -243,6 +258,7 @@ def main():
     config.add_route('home', '/')
     config.add_route('new', '/new')
     config.add_route('add', '/add')
+    config.add_route('add-dynamic', '/add-dynamic')
     config.add_route('detail', '/detail/{id}')
     config.add_route('edit', '/edit/{id}')
     config.add_route('update', '/update/{id}')
