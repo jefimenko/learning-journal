@@ -75,7 +75,7 @@
             dataType: "json",
             data: { id: entry_id, title: title_input, text: text_input },
         }).done(function(json) {
-            $("article h3").val(json.title);
+            $(".entry-title").text(json.title);
             $("article div.entry_body p").replaceWith(json.text_markdown);
 
             $('#title').val(json.title);

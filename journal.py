@@ -45,7 +45,15 @@ class Entry(Base):
 
     @classmethod
     def by_id(cls, id):
-        return DBSession.query(cls).filter(cls.id==id).one()
+        return DBSession.query(cls).get(id)
+
+    @classmethod
+    def update(cls, request):
+        to_edit = DBSession.query(cls).get(request.params.get('id')[6:])
+        to_edit.title = request.params.get('title')
+        to_edit.text = request.params.get('text')
+        edited = DBSession.query(cls).get(request.params.get('id')[6:])
+        return edited
 
     @classmethod
     def from_request(cls, request):
@@ -105,15 +113,13 @@ def edit_entry_dynamic(request):
     if request.authenticated_userid:
         if request.method == 'POST':
             try:
-                # Get rid of 'entry='
-                db_id = request.params.get('id', -1)[6:]
-                title = request.params.get('title', None)
-                text = request.params.get('text', None)
-                request.db.cursor().execute(UPDATE_ONE_ENTRY, (title, text, db_id))
+                edited = Entry.update(request)
             except psycopg2.Error:
                 return HTTPInternalServerError
-            text_markdown = markdown.markdown(text, extensions=['codehilite(linenums=True)', 'fenced_code'])
-        return {'title': title, 'text': text, 'text_markdown': text_markdown}
+            text_markdown = markdown.markdown(edited.text, extensions=['codehilite(linenums=True)', 'fenced_code'])
+        return {'title': edited.title,
+                'text': edited.text,
+                'text_markdown': text_markdown}
     else:
         return HTTPForbidden()
 
@@ -134,11 +140,6 @@ def update_entry_action(request):
 @view_config(route_name='add-dynamic', request_method='POST', renderer='json')
 def add_entry_dynamic(request):
     if request.authenticated_userid:
-        # write_entry(request)
-        # cursor = request.db.cursor()
-        # cursor.execute(READ_ENTRY)
-        # latest_post = cursor.fetchone()
-        import pdb; pdb.set_trace()
         new = Entry.from_request(request)
 
         return {'id': new.id,
@@ -153,7 +154,7 @@ def add_entry_dynamic(request):
 def add_entry(request):
     if request.authenticated_userid:
         try:
-            new = Entry.from_request(request)
+            Entry.from_request(request)
         except psycopg2.Error:
             return HTTPInternalServerError
         return HTTPFound(request.route_url('home'))
