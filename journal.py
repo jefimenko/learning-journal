@@ -20,6 +20,7 @@ import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from zope.sqlalchemy import ZopeTransactionExtension
+import transaction
 
 
 here = os.path.dirname(os.path.abspath(__file__))
@@ -31,7 +32,7 @@ Base = declarative_base()
 
 class Entry(Base):
     __tablename__ = 'entries'
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
+    id = sa.Column(sa.Integer, sa.Sequence('entries_id_seq'), primary_key=True)
     title = sa.Column(sa.Unicode(127), nullable=False)
     text = sa.Column(sa.UnicodeText, nullable=False)
     created = sa.Column(
@@ -41,10 +42,6 @@ class Entry(Base):
     @classmethod
     def all(cls):
         return DBSession.query(cls).order_by(cls.created.desc()).all()
-
-    @classmethod
-    def latest(cls):
-        return DBSession.query(cls.order_by(cls.created.desc())).one()
 
     @classmethod
     def by_id(cls, id):
@@ -57,6 +54,7 @@ class Entry(Base):
         created = datetime.datetime.utcnow()
         new_entry = cls(title=title, text=text, created=created)
         DBSession.add(new_entry)
+        return DBSession.query(cls).filter(cls.created==new_entry.created).one()
 
 
 logging.basicConfig()
@@ -136,14 +134,17 @@ def update_entry_action(request):
 @view_config(route_name='add-dynamic', request_method='POST', renderer='json')
 def add_entry_dynamic(request):
     if request.authenticated_userid:
-        write_entry(request)
-        cursor = request.db.cursor()
-        cursor.execute(READ_ENTRY)
-        latest_post = cursor.fetchone()
-        return {'id': latest_post[0],
-                'title': latest_post[1],
-                'text': latest_post[2],
-                'created': latest_post[3].strftime('%b %d, %Y')}
+        # write_entry(request)
+        # cursor = request.db.cursor()
+        # cursor.execute(READ_ENTRY)
+        # latest_post = cursor.fetchone()
+        import pdb; pdb.set_trace()
+        new = Entry.from_request(request)
+
+        return {'id': new.id,
+                'title': new.title,
+                'text': new.text,
+                'created': new.created.strftime('%b %d, %Y')}
     else:
         return HTTPForbidden
 
