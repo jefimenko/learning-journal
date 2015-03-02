@@ -91,10 +91,7 @@ log = logging.getLogger(__file__)
 
 @view_config(route_name='home', renderer='templates/list.jinja2')
 def read_entries(request):
-    cursor = request.db.cursor()
-    cursor.execute(READ_ENTRY)
-    columns = ('id', 'title', 'text', 'created')
-    entries = [dict(zip(columns, onerow)) for onerow in cursor.fetchall()]
+    entries = Entry.all()
     return {'entries': entries}
 
 
