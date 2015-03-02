@@ -17,33 +17,13 @@ from waitress import serve
 import markdown
 import datetime
 import sqlalchemy as sa
-from sqlalchemy.ex.declarative import declarative_base
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker
 from zope.sqlalchemy import ZopeTransactionExtension
 
 
 here = os.path.dirname(os.path.abspath(__file__))
 
-
-DB_SCHEMA = """
-CREATE TABLE IF NOT EXISTS entries (
-    id serial PRIMARY KEY,
-    title VARCHAR (127) NOT NULL,
-    text TEXT NOT NULL,
-    created TIMESTAMP NOT NULL
-)
-"""
-
-INSERT_ENTRY = """
-INSERT INTO entries (
-    title, text, created)
-    VALUES(%s, %s, %s
-)
-"""
-
-READ_ENTRY = """
-SELECT id, title, text, created FROM entries ORDER BY created DESC
-"""
 
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
@@ -55,12 +35,16 @@ class Entry(Base):
     title = sa.Column(sa.Unicode(127), nullable=False)
     text = sa.Column(sa.UnicodeText, nullable=False)
     created = sa.Column(
-        sa.Datetime, nullable=False, default=datetime.datetime.utcnow
+        sa.DateTime, nullable=False, default=datetime.datetime.utcnow
     )
 
     @classmethod
     def all(cls):
         return DBSession.query(cls).order_by(cls.created.desc()).all()
+
+    @classmethod
+    def latest(cls):
+        return DBSession.query(cls.order_by(cls.created.desc())).one()
 
     @classmethod
     def by_id(cls, id):
@@ -79,16 +63,6 @@ logging.basicConfig()
 log = logging.getLogger(__file__)
 
 
-# def write_entry(request):
-#     # Get title and text from requeset
-#     values = [request.params.get('title'),
-#               request.params.get('text'),
-#               datetime.datetime.utcnow()]
-
-    # execute SQL with appropriate place holders
-    # request.db.cursor().execute(INSERT_ENTRY, values)
-
-
 @view_config(route_name='home', renderer='templates/list.jinja2')
 def read_entries(request):
     entries = Entry.all()
@@ -100,20 +74,14 @@ def new_entry(request):
     return {}
 
 
-READ_ONE_ENTRY = """
-SELECT id, title, text, created FROM entries WHERE id=%s
-"""
-
-
 def read_one_entry_from_db(request):
     entry_id = request.matchdict.get('id')
-    cursor = request.db.cursor()
+    entry = Entry.by_id(entry_id)
 
-    cursor.execute(READ_ONE_ENTRY, [entry_id])
-
-    columns = ('id', 'title', 'text', 'created')
-
-    return dict(zip(columns, cursor.fetchone()))
+    return {'id': entry.id,
+            'title': entry.title,
+            'text': entry.text,
+            'created': entry.created}
 
 
 @view_config(route_name='detail', renderer='templates/detail.jinja2')
@@ -124,10 +92,6 @@ def view_details(request):
     from pygments.lexers import get_lexer_by_name
     from pygments.formatters import HtmlFormatter
 
-    # lexer = get_lexer_by_name("python", stripall=True)
-    # formatter = HtmlFormatter(linenos=True, cssclass="codehilite")
-    # entry[0]['text'] = highlight(entry[0]['text'], lexer, formatter)
-
     entry['text_markdown'] = markdown.markdown(entry['text'], extensions=['codehilite(linenums=True)', 'fenced_code'])
     return {'entry': entry}
 
@@ -136,11 +100,6 @@ def view_details(request):
 def edit_entry(request):
     entry = read_one_entry_from_db(request)
     return {'entry': entry}
-
-
-UPDATE_ONE_ENTRY = """
-UPDATE entries SET (title, text) = (%s, %s) WHERE id=%s
-"""
 
 
 @view_config(route_name='update-dynamic', request_method='POST', renderer='json')
@@ -193,7 +152,7 @@ def add_entry_dynamic(request):
 def add_entry(request):
     if request.authenticated_userid:
         try:
-            write_entry(request)
+            new = Entry.from_request(request)
         except psycopg2.Error:
             return HTTPInternalServerError
         return HTTPFound(request.route_url('home'))
