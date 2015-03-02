@@ -16,6 +16,11 @@ from cryptacular.bcrypt import BCRYPTPasswordManager
 from waitress import serve
 import markdown
 import datetime
+import sqlalchemy as sa
+from sqlalchemy.ex.declarative import declarative_base
+from sqlalchemy.orm import scoped_session, sessionmaker
+from zope.sqlalchemy import ZopeTransactionExtension
+
 
 here = os.path.dirname(os.path.abspath(__file__))
 
@@ -40,62 +45,48 @@ READ_ENTRY = """
 SELECT id, title, text, created FROM entries ORDER BY created DESC
 """
 
+DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
+Base = declarative_base()
+
+
+class Entry(Base):
+    __tablename__ = 'entries'
+    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
+    title = sa.Column(sa.Unicode(127), nullable=False)
+    text = sa.Column(sa.UnicodeText, nullable=False)
+    created = sa.Column(
+        sa.Datetime, nullable=False, default=datetime.datetime.utcnow
+    )
+
+    @classmethod
+    def all(cls):
+        return DBSession.query(cls).order_by(cls.created.desc()).all()
+
+    @classmethod
+    def by_id(cls, id):
+        return DBSession.query(cls).filter(cls.id==id).one()
+
+    @classmethod
+    def from_request(cls, request):
+        title = request.params.get('title', None)
+        text = request.params.get('text', None)
+        created = datetime.datetime.utcnow()
+        new_entry = cls(title=title, text=text, created=created)
+        DBSession.add(new_entry)
+
 
 logging.basicConfig()
 log = logging.getLogger(__file__)
 
 
-def connect_db(settings):
-    """Return a connection to the configured database"""
-    return psycopg2.connect(settings['db'])
-
-
-def init_db():
-    """Create database tables defined by DB_SCHEMA
-
-    Warning: This function will not update existing table definitions
-    """
-    settings = {}
-    settings['db'] = os.environ.get(
-        'DATABASE_URL', 'dbname=learning-journal user=postgres password=admin'
-    )
-    with closing(connect_db(settings)) as db:
-        db.cursor().execute(DB_SCHEMA)
-        db.commit()
-
-
-@subscriber(NewRequest)
-def open_connection(event):
-    request = event.request
-    settings = request.registry.settings
-    request.db = connect_db(settings)
-    request.add_finished_callback(close_connection)
-
-
-def close_connection(request):
-    """
-    Close the database connection for a request.
-
-    If there has ben an error in processings the request, abort any
-    open transactions.
-    """
-    db = getattr(request, 'db', None)
-    if db is not None:
-        if request.exception is not None:
-            db.rollback()
-        else:
-            db.commit()
-        request.db.close()
-
-
-def write_entry(request):
-    # Get title and text from requeset
-    values = [request.params.get('title'),
-              request.params.get('text'),
-              datetime.datetime.utcnow()]
+# def write_entry(request):
+#     # Get title and text from requeset
+#     values = [request.params.get('title'),
+#               request.params.get('text'),
+#               datetime.datetime.utcnow()]
 
     # execute SQL with appropriate place holders
-    request.db.cursor().execute(INSERT_ENTRY, values)
+    # request.db.cursor().execute(INSERT_ENTRY, values)
 
 
 @view_config(route_name='home', renderer='templates/list.jinja2')
@@ -230,9 +221,14 @@ def main():
     settings = {}
     settings['reload_all'] = os.environ.get('DEBUG', True)
     settings['debug_all'] = os.environ.get('DEBUG', True)
-    settings['db'] = os.environ.get(
-        'DATABASE_URL', 'dbname=learning-journal user=postgres password=admin'
+    # settings['db'] = os.environ.get(
+    #     'DATABASE_URL', 'dbname=learning-journal user=postgres password=admin'
+    # )
+    settings['sqlalchemy.url'] = os.environ.get(
+        'DATABASE_URL', 'postgresql://postgres:admin@localhost:5432/learning-journal'
     )
+    engine = sa.engine_from_config(settings, 'sqlalchemy.')
+    DBSession.configure(bind=engine)
     settings['auth.username'] = os.environ.get('AUTH_USERNAME', 'admin')
     manager = BCRYPTPasswordManager()
     settings['auth.password'] = os.environ.get(
@@ -255,6 +251,7 @@ def main():
         authorization_policy=ACLAuthorizationPolicy(),
     )
     config.include('pyramid_jinja2')
+    config.include('pyramid_tm')
     config.add_route('home', '/')
     config.add_route('new', '/new')
     config.add_route('add', '/add')
