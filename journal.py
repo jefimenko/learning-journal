@@ -84,6 +84,7 @@ def read_one_entry_from_db(request):
     entry_id = request.matchdict.get('id')
     entry = Entry.by_id(entry_id)
 
+    # return entry
     return {'id': entry.id,
             'title': entry.title,
             'text': entry.text,
@@ -98,6 +99,7 @@ def view_details(request):
     from pygments.lexers import get_lexer_by_name
     from pygments.formatters import HtmlFormatter
 
+    # entry.text = markdown.markdown(entry.text, extensions=['codehilite(linenums=True)', 'fenced_code'])
     entry['text_markdown'] = markdown.markdown(entry['text'], extensions=['codehilite(linenums=True)', 'fenced_code'])
     return {'entry': entry}
 
